@@ -1,0 +1,309 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WooCommerce - Actinia payment gateway\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-05-29 13:55+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.2.1; wp-5.1.1"
+
+#: woocommerce-actinia.php:84 woocommerce-actinia.php:372
+msgid "Payment gateway"
+msgstr ""
+
+#: woocommerce-actinia.php:180
+msgid "Place order"
+msgstr ""
+
+#: woocommerce-actinia.php:223
+msgid "Enable/Disable"
+msgstr ""
+
+#: woocommerce-actinia.php:225
+msgid "Enable Actinia Payment Module."
+msgstr ""
+
+#: woocommerce-actinia.php:227
+msgid "Show in the Payment List as a payment option"
+msgstr ""
+
+#: woocommerce-actinia.php:230
+msgid "Test mode:"
+msgstr ""
+
+#: woocommerce-actinia.php:232
+msgid "Enable Test Mode"
+msgstr ""
+
+#: woocommerce-actinia.php:234
+msgid "Place the payment gateway in test mode using test Merchant id."
+msgstr ""
+
+#: woocommerce-actinia.php:238
+msgid "Title:"
+msgstr ""
+
+#: woocommerce-actinia.php:240
+msgid "Actinia Online Payments"
+msgstr ""
+
+#: woocommerce-actinia.php:241
+msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: woocommerce-actinia.php:245
+msgid "Description:"
+msgstr ""
+
+#: woocommerce-actinia.php:247
+msgid ""
+"Pay securely by Credit or Debit Card or Internet Banking through actinia "
+"service."
+msgstr ""
+
+#: woocommerce-actinia.php:248
+msgid "This controls the description which the user sees during checkout."
+msgstr ""
+
+#: woocommerce-actinia.php:252
+msgid "Merchant ID"
+msgstr ""
+
+#: woocommerce-actinia.php:258
+msgid "Merchant secretkey"
+msgstr ""
+
+#: woocommerce-actinia.php:260
+msgid "Given to Merchant by actinia"
+msgstr ""
+
+#: woocommerce-actinia.php:264
+msgid "Show MasterCard & Visa logos"
+msgstr ""
+
+#: woocommerce-actinia.php:266
+msgid ""
+"Show the MasterCard & Visa logo in the payment method section for the user"
+msgstr ""
+
+#: woocommerce-actinia.php:268
+msgid "Tick to show \"actinia\" logo"
+msgstr ""
+
+#: woocommerce-actinia.php:272 woocommerce-actinia.php:275
+msgid "Payment type"
+msgstr ""
+
+#: woocommerce-actinia.php:279
+msgid "Show calendar on checkout"
+msgstr ""
+
+#: woocommerce-actinia.php:281
+msgid "Show recurring payment calendar on checkout"
+msgstr ""
+
+#: woocommerce-actinia.php:283
+msgid "Tick to show show recurring payment calendar on checkout"
+msgstr ""
+
+#: woocommerce-actinia.php:311
+msgid "Enable force detect lang"
+msgstr ""
+
+#: woocommerce-actinia.php:313 woocommerce-actinia.php:315
+msgid "Enable detecting site lang if it used"
+msgstr ""
+
+#: woocommerce-actinia.php:319
+msgid "Return Page"
+msgstr ""
+
+#: woocommerce-actinia.php:321
+msgid "Default order page"
+msgstr ""
+
+#: woocommerce-actinia.php:322
+msgid "URL of success page"
+msgstr ""
+
+#: woocommerce-actinia.php:326
+msgid "Payment completed order status"
+msgstr ""
+
+#: woocommerce-actinia.php:330
+msgid "The default order status after successful payment."
+msgstr ""
+
+#: woocommerce-actinia.php:333
+msgid "Payment expired order status"
+msgstr ""
+
+#: woocommerce-actinia.php:337
+msgid "Order status when payment was expired."
+msgstr ""
+
+#: woocommerce-actinia.php:340
+msgid "Payment declined order status"
+msgstr ""
+
+#: woocommerce-actinia.php:344
+msgid "Order status when payment was declined."
+msgstr ""
+
+#: woocommerce-actinia.php:356
+msgid "Default status"
+msgstr ""
+
+#: woocommerce-actinia.php:371
+msgid "Actinia.eu"
+msgstr ""
+
+#: woocommerce-actinia.php:394
+msgid "Card Number:"
+msgstr ""
+
+#: woocommerce-actinia.php:400
+msgid "XXXXXXXXXXXXXXXX"
+msgstr ""
+
+#: woocommerce-actinia.php:406
+msgid "Expiry Date:"
+msgstr ""
+
+#: woocommerce-actinia.php:409
+msgid "CVV2:"
+msgstr ""
+
+#: woocommerce-actinia.php:425
+msgid "XXX"
+msgstr ""
+
+#: woocommerce-actinia.php:431
+msgid "Pay"
+msgstr ""
+
+#: woocommerce-actinia.php:485
+msgid "Order: "
+msgstr ""
+
+#: woocommerce-actinia.php:522
+msgid "Pay via Actinia.eu"
+msgstr ""
+
+#: woocommerce-actinia.php:705
+msgid "Refund Actinia status: processing"
+msgstr ""
+
+#: woocommerce-actinia.php:708 woocommerce-actinia.php:709
+msgid "Refund Actinia status: Declined"
+msgstr ""
+
+#: woocommerce-actinia.php:711
+msgid "Refund Actinia status: Unknown"
+msgstr ""
+
+#: woocommerce-actinia.php:712
+msgid "Refund Actinia status: Unknown. Try to contact support"
+msgstr ""
+
+#: woocommerce-actinia.php:781
+msgid ""
+"An error has occurred during payment. Please contact us to ensure your order "
+"has submitted."
+msgstr ""
+
+#: woocommerce-actinia.php:784
+msgid "Amount incorrect."
+msgstr ""
+
+#: woocommerce-actinia.php:787
+msgid "An error has occurred during payment. Merchant data is incorrect."
+msgstr ""
+
+#: woocommerce-actinia.php:790
+msgid "Payment method incorrect."
+msgstr ""
+
+#: woocommerce-actinia.php:802
+msgid "Transaction ERROR: signature is not valid"
+msgstr ""
+
+#: woocommerce-actinia.php:804
+msgid "An error has occurred during payment. Signature is not valid."
+msgstr ""
+
+#: woocommerce-actinia.php:808
+msgid ""
+"Thank you for shopping with us. However, the transaction has been declined."
+msgstr ""
+
+#: woocommerce-actinia.php:822
+msgid ""
+"Thank you for shopping with us. However, the transaction has been expired."
+msgstr ""
+
+#: woocommerce-actinia.php:823
+msgid "Transaction ERROR: order expired<br/>ACTINIA ID: "
+msgstr ""
+
+#: woocommerce-actinia.php:835
+msgid "Thank you for shopping with us. But your payment declined."
+msgstr ""
+
+#: woocommerce-actinia.php:843
+msgid "Actinia payment successful.<br/>ACTINIA ID: "
+msgstr ""
+
+#: woocommerce-actinia.php:848
+msgid "Transaction ERROR: amount incorrect<br/>ACTINIA ID: "
+msgstr ""
+
+#: woocommerce-actinia.php:886
+msgid ""
+"Thank you for shopping with us. Your account has been charged and your "
+"transaction is successful."
+msgstr ""
+
+#: woocommerce-actinia.php:938
+msgid "Built-in form"
+msgstr ""
+
+#: woocommerce-actinia.php:939
+msgid "In-store payment page"
+msgstr ""
+
+#: woocommerce-actinia.php:940
+msgid "Redirection"
+msgstr ""
+
+#: woocommerce-actinia.php:948
+msgid "Settings"
+msgstr ""
+
+#. Name of the plugin
+msgid "WooCommerce - Actinia payment gateway"
+msgstr ""
+
+#. Description of the plugin
+msgid "Actinia Payment Gateway for WooCommerce."
+msgstr ""
+
+#. URI of the plugin
+msgid "https://actinia.eu"
+msgstr ""
+
+#. Author of the plugin
+msgid "ACTINIA - Unified Payment Platform"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://actinia.eu/"
+msgstr ""
