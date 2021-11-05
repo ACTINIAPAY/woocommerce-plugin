@@ -36,7 +36,7 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
          * WC_PaymentActinia constructor.
          */
         protected function __construct() {
-            add_action( 'plugins_loaded', array( $this, 'init' ) );
+            add_action( 'plugins_loaded', [$this, 'init']);
         }
 
         /**
@@ -46,7 +46,7 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
             if ( self::check_environment() ) {
                 return;
             }
-            add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ) );
+            add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), [$this, 'plugin_action_links']);
             $this->init_actinia();
         }
 
@@ -57,13 +57,10 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
             require_once( dirname( __FILE__ ) . '/includes/class-wc-actinia-gateway.php' );
             require_once( dirname( __FILE__ ) . '/includes/wc-actiniaapi.php' );
             load_plugin_textdomain( "actinia-woocommerce-payment-gateway", false, basename( dirname( __FILE__ )) . '/languages' );
-            add_filter( 'woocommerce_payment_gateways', array( $this, 'woocommerce_add_actinia_gateway' ) );
-            add_action('wp_ajax_nopriv_generate_ajax_order_actinia_info', array('WC_actinia', 'generate_ajax_order_actinia_info' ), 99);
-            add_action('wp_ajax_generate_ajax_order_actinia_info', array('WC_actinia', 'generate_ajax_order_actinia_info'), 99);
-            if ( class_exists( 'WC_Subscriptions_Order' ) && function_exists( 'wcs_create_renewal_order' ) ) {
-                $this->subscription_support_enabled = true;
-                require_once( dirname( __FILE__ ) . '/includes/wc-actinia-subscriptions.php' );
-            }
+            add_filter( 'woocommerce_payment_gateways', [$this, 'woocommerce_add_actinia_gateway']);
+            add_action('wp_ajax_nopriv_generate_ajax_order_actinia_info', ['WC_actinia', 'generate_ajax_order_actinia_info'], 99);
+            add_action('wp_ajax_generate_ajax_order_actinia_info', ['WC_actinia', 'generate_ajax_order_actinia_info'], 99);
+
         }
 
         /**
@@ -90,9 +87,9 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
             return false;
         }
         public function plugin_action_links( $links ) {
-            $plugin_links = array(
+            $plugin_links = [
                 '<a href="' . admin_url( 'admin.php?page=wc-settings&tab=checkout&section=actinia' ) . '">' . __( 'Settings', 'woocommerce-actinia' ) . '</a>',
-            );
+            ];
 
             return array_merge( $plugin_links, $links );
         }

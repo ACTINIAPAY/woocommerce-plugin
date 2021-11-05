@@ -5,6 +5,10 @@ if (!defined('ABSPATH')) {
 
 class WC_Actinia_Api
 {
+    const URL_TEST = 'https://api.clients.beta.actinia.tech/';
+//    const URL_TEST = 'https://api.clients.sandbox.actinia.tech/';
+    const URL_PROD = 'https://api.clients.actinia.tech/';
+
     const ORDER_APPROVED = 'approved';
     const ORDER_DECLINED = 'declined';
 
@@ -13,7 +17,6 @@ class WC_Actinia_Api
     const SIGNATURE_SEPARATOR = '|';
     const SESSION_PUBLICKEY_NAME = "actinia_publicKey";
 
-    const URL = "https://api.clients.sandbox.actinia.tech/";
 
     const ENDPOINTS = [
         'invoiceCreate' => 'v1/invoice/create',
@@ -24,6 +27,7 @@ class WC_Actinia_Api
         'publicKeyGet' => 'v1/host/public/get',
     ];
 
+    protected $url = '';
     protected $clientCodeName = '';
     protected $endpoint = null;
     protected $data = [];
@@ -34,6 +38,15 @@ class WC_Actinia_Api
     protected $isHostPublicKey = true;
     protected $privateKey = null;
 
+
+    public function __construct($is_test = false)
+    {
+        if($is_test === 'yes')
+            $this->url = self::URL_TEST;
+        else
+            $this->url = self::URL_PROD;
+
+    }
 
     public function setPrivateKey($val){
         $this->privateKey = $val;
@@ -259,7 +272,7 @@ class WC_Actinia_Api
         try{
             $fields = $this->prepareData();
 
-            $ch = curl_init(self::URL . $this->endpoint);
+            $ch = curl_init($this->url . $this->endpoint);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
 
@@ -342,50 +355,28 @@ class WC_Actinia_Api
         }
     }
 
-//    public static function getSignature($data, $password, $encoded = true)
-//    {
-//        $data = array_filter($data);
-//        ksort($data);
-//
-//        $str = $password;
-//        foreach ($data as $k => $v) {
-//            $str .= self::SIGNATURE_SEPARATOR . $v;
-//        }
-//
-//        if ($encoded) {
-//            return sha1($str);
-//        } else {
-//            return $str;
-//        }
-//    }
+    /**
+     * @param $_data
+     * @return array
+     * @throws Exception
+     */
+    public function isPaymentValid($_data){
+        try{
+            if(!empty($_data['data']) && !empty($_data['token'])) {
+                if($this->isHostPublicKey)
+                    $this->chkHostData((array)$_data['data'], (string)$_data['token']);
+                $this->resultData = $_data['data'];
+            }
+            else
+                throw new Exception('Empty data');
 
-//    public static function isPaymentValid($actiniaSettings, $response)
-//    {
-//        if ($response['order_status'] == self::ORDER_DECLINED) {
-//            return 'Order was declined.';
-//        }
-//		if ($response['order_status'] != self::ORDER_APPROVED) {
-//            return 'Order was not approv.';
-//        }
-//
-//        if ($actiniaSettings['merchant_id'] != $response['merchant_id']) {
-//            return 'An error has occurred during payment. Merchant data is incorrect.';
-//        }
-//
-//		$originalResponse = $response['signature'];
-//		if (isset($response['response_signature_string'])){
-//			unset($response['response_signature_string']);
-//		}
-//		if (isset($response['signature'])){
-//			unset($response['signature']);
-//		}
-//		if (self::getSignature($response, $actiniaSettings['secret_key']) != $responseSignature) {
-//            return 'Signature is not valid' ;
-//        }
-//
-//
-//        return true;
-//    }
+            return (array)$_data['data'];
+
+        } catch (Exception $e){
+            throw new Exception('isPaymentValid: ' . $e->getMessage());
+        }
+
+    }
 
     /**
      * @param $order

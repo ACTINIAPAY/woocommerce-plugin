@@ -13,11 +13,14 @@ if (!defined('ACTINIA_WOOCOMMERCE_VERSION')) {
  */
 class WC_actinia extends WC_Payment_Gateway
 {
-    const ORDER_APPROVED = 'approved';
-    const ORDER_DECLINED = 'declined';
-    const ORDER_EXPIRED = 'expired';
+
+    const ORDER_APPROVED = 'PAID';
+    const ORDER_PROCESSING = 'PENDING';
+    const ORDER_EXPIRED = 'EXPIRED';
+    const ORDER_CANCELED = 'CANCELED';
+
     const SIGNATURE_SEPARATOR = '|';
-    const ORDER_SEPARATOR = ":";
+    const ORDER_SEPARATOR = "_";
 
     public $private_key;
     public $merchant_id;
@@ -25,24 +28,18 @@ class WC_actinia extends WC_Payment_Gateway
     public $client_account_id;
     public $currency;
     public $language;
+    public $is_test;
 
     public $liveurl;
     public $refundurl;
     public $redirect_page_id;
     public $page_mode;
     public $page_mode_instant;
-//    public $on_checkout_page;
     public $default_order_status;
     public $expired_order_status;
     public $declined_order_status;
     public $actinia_unique;
     public $msg = [];
-
-//    public $calendar;
-//    public $salt;
-//    public $test_mode;
-//    public $payment_type;
-//    public $force_lang;
 
     /**
      * WC_actinia constructor.
@@ -83,7 +80,6 @@ class WC_actinia extends WC_Payment_Gateway
      */
     function generate_ajax_order_actinia_info()
     {
-        wp_die('generate_ajax_order_actinia_info');
         check_ajax_referer('actinia-submit-nonce', 'nonce_code');
         wc_maybe_define_constant('WOOCOMMERCE_CHECKOUT', true);
         WC()->checkout()->process_checkout();
@@ -97,7 +93,6 @@ class WC_actinia extends WC_Payment_Gateway
      */
     function custom_order_button_html($button)
     {
-        wp_die('custom_order_button_html');
         $order_button_text = __('Place order', 'actinia-woocommerce-payment-gateway');
         $js_event = "actinia_submit_order(event);";
         $button = '<button type="submit" onClick="' . esc_attr($js_event) . '" class="button alt" name="woocommerce_checkout_place_order" id="place_order" value="' . esc_attr($order_button_text) . '" data-value="' . esc_attr($order_button_text) . '" >' . esc_attr($order_button_text) . '</button>';
@@ -108,7 +103,7 @@ class WC_actinia extends WC_Payment_Gateway
     /**
      * Enqueue checkout page scripts
      */
-    protected function checkoutScriptsActinia()
+    public function checkoutScriptsActinia()
     {
         if (is_checkout()) {
             wp_enqueue_style('actinia-checkout', ACTINIA_BASE_PATH . 'assets/css/actinia_styles.css');
@@ -145,6 +140,13 @@ class WC_actinia extends WC_Payment_Gateway
                 'label' => __('Enable Actinia Payment Module.', 'actinia-woocommerce-payment-gateway'),
                 'default' => 'no',
                 'description' => __('Show in the Payment List as a payment option', 'actinia-woocommerce-payment-gateway')
+            ],
+            'is_test' => [
+                'title' => __('Test mode', 'actinia-woocommerce-payment-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable test mode', 'actinia-woocommerce-payment-gateway'),
+                'default' => 'no',
+                'description' => __('Enable only for unit testing', 'actinia-woocommerce-payment-gateway')
             ],
             'title' => [
                 'title' => __('Title:', 'actinia-woocommerce-payment-gateway'),
@@ -194,29 +196,6 @@ class WC_actinia extends WC_Payment_Gateway
                 'description' => __('Tick to show "actinia" logo', 'actinia-woocommerce-payment-gateway'),
                 'desc_tip' => true
             ],
-//            'payment_type' => array(
-//                'title' => __('Payment type', 'actinia-woocommerce-payment-gateway'),
-//                'type' => 'select',
-//                'options' => $this->actinia_get_payment_type(),
-//                'description' => __('Payment type', 'actinia-woocommerce-payment-gateway'),
-//                'desc_tip' => true
-//            ),
-//            'calendar' => array(
-//                'title' => __('Show calendar on checkout', 'actinia-woocommerce-payment-gateway'),
-//                'type' => 'checkbox',
-//                'label' => __('Show recurring payment calendar on checkout', 'actinia-woocommerce-payment-gateway'),
-//                'default' => 'no',
-//                'description' => __('Tick to show show recurring payment calendar on checkout', 'actinia-woocommerce-payment-gateway'),
-//                'desc_tip' => true
-//            ),
-//            'force_lang' => array(
-//                'title' => __('Enable force detect lang', 'actinia-woocommerce-payment-gateway'),
-//                'type' => 'checkbox',
-//                'label' => __('Enable detecting site lang if it used', 'actinia-woocommerce-payment-gateway'),
-//                'default' => 'no',
-//                'description' => __('Enable detecting site lang if it used', 'actinia-woocommerce-payment-gateway'),
-//                'desc_tip' => true
-//            ),
             'redirect_page_id' => [
                 'title' => __('Return Page', 'actinia-woocommerce-payment-gateway'),
                 'type' => 'select',
@@ -278,120 +257,8 @@ class WC_actinia extends WC_Payment_Gateway
     }
 
     /**
-     * CCard fields on generating order
-     */
-    /*public function payment_fields()
-    {
-        if ($this->description) {
-            echo wpautop(wptexturize($this->description));
-        }
-
-        if (isset($this->on_checkout_page) and $this->on_checkout_page == 'yes') {
-            echo
-            '<form autocomplete="on" class="actinia-ccard" id="checkout_actinia_form">' .
-                '<input type="hidden" name="payment_system" value="card">' .
-                '<div class="f-container">' .
-                    '<div class="input-wrapper">' .
-                        '<div class="input-label w-1">' .
-                            esc_html_e('Card Number:', 'actinia-woocommerce-payment-gateway') .
-                        '</div>' .
-                        '<div class="input-field w-1">' .
-                            '<input required type="tel" name="card_number" class="input actinia-credit-cart"' .
-                                   'id="actinia_ccard"' .
-                                   'autocomplete="cc-number"' .
-                                   'placeholder="' . esc_html_e('XXXXXXXXXXXXXXXX', 'actinia-woocommerce-payment-gateway') . '"/>' .
-                            '<div id="f_card_sep"></div>' .
-                        '</div>' .
-                    '</div>' .
-                    '<div class="input-wrapper">' .
-                        '<div class="input-label w-3-2">' .
-                            esc_html_e('Expiry Date:', 'actinia-woocommerce-payment-gateway') .
-                        '</div>' .
-                        '<div class="input-label w-4 w-rigth">' .
-                            esc_html_e('CVV2:', 'actinia-woocommerce-payment-gateway') .
-                        '</div>' .
-                        '<div class="input-field w-4">' .
-                            '<input required type="tel" name="expiry_month" id="actinia_expiry_month"' .
-                                   'onkeydown="nextInput(this,event)" class="input"' .
-                                   'maxlength="2" placeholder="MM"/>' .
-                        '</div>' .
-                        '<div class="input-field w-4">' .
-                            '<input required type="tel" name="expiry_year" id="actinia_expiry_year"' .
-                                   'onkeydown="nextInput(this,event)" class="input"' .
-                                   'maxlength="2" placeholder="YY"/>' .
-                        '</div>' .
-                        '<div class="input-field w-4 w-rigth">' .
-                            '<input autocomplete="off" required type="tel" name="cvv2" id="actinia_cvv2"' .
-                                   'onkeydown="nextInput(this,event)"' .
-                                   'class="input"' .
-                                   'placeholder="' . esc_html_e('XXX', 'actinia-woocommerce-payment-gateway') . '"/>' .
-                        '</div>' .
-                    '</div>' .
-                    '<div style="display: none" class="input-wrapper stack-1">' .
-                        '<div class="input-field w-1">' .
-                            '<input id="submit_actinia_checkout_form" type="submit" class="button"' .
-                                   'value="' . esc_html_e('Pay', 'actinia-woocommerce-payment-gateway') . '"/>' .
-                        '</div>' .
-                    '</div>' .
-                    '<div class="error-wrapper"></div>' .
-                '</div>' .
-            '</form>';
-        }
-    }*/
-
-    /**
-     * Order page
-     * @param $order
-     */
-    function receipt_page($order)
-    {
-        wp_die('receipt_page');
-        echo $this->generate_actinia_form($order);
-    }
-
-    /**
-     * filter empty var for signature
-     * @param $var
-     * @return bool
-     */
-    protected function actinia_filter($var)
-    {
-        wp_die('actinia_filter');
-        return $var !== '' && $var !== null;
-    }
-
-    /**
-     * Actinia signature generation
-     * @param $data
-     * @param $password
-     * @param bool $encoded
+     * @param $order_id
      * @return string
-     */
-    protected function getSignature($data, $password, $encoded = true)
-    {
-        wp_die('getSignature');
-        if (isset($data['additional_info'])) {
-            $data['additional_info'] = str_replace("\\", "", $data['additional_info']);
-        }
-
-        $data = array_filter($data, [$this, 'actinia_filter']);
-        ksort($data);
-
-        $str = $password;
-        foreach ($data as $k => $v) {
-            $str .= self::SIGNATURE_SEPARATOR . $v;
-        }
-        if ($encoded) {
-            return sha1($str);
-        } else {
-            return $str;
-        }
-    }
-
-    /**
-     * @param int $order_id
-     * @return string
-     * +++
      */
     protected function getUniqueId($order_id)
     {
@@ -401,89 +268,10 @@ class WC_actinia extends WC_Payment_Gateway
     /**
      * @param $order_id
      * @return string
-     * +++
      */
     private function getProductInfo($order_id)
     {
         return __('Order: ', 'actinia-woocommerce-payment-gateway') . $order_id;
-    }
-
-    /**
-     * Generate checkout
-     * @param $order_id
-     * @return string
-     */
-    function generate_actinia_form($order_id)
-    {
-        wp_die('generate_actinia_form');
-        $order = new WC_Order($order_id);
-        $amount = round( $order->get_total() * 100 );
-        $actinia_args = [
-            'order_id' => $this->getUniqueId($order_id),
-            'merchant_id' => $this->merchant_id,
-            'order_desc' => $this->getProductInfo($order_id),
-            'amount' => $amount,
-            'currency' => get_woocommerce_currency(),
-            'server_callback_url' => $this->getCallbackUrl() . '&is_callback=true',
-            'response_url' => $this->getCallbackUrl(),
-            'lang' => $this->getLanguage(),
-            'sender_email' => $this->getEmail($order)
-        ];
-        if ($this->calendar == 'yes') {
-            $actinia_args['required_rectoken'] = 'Y';
-            $actinia_args['subscription'] = 'Y';
-            $actinia_args['subscription_callback_url'] = $this->getCallbackUrl() . '&is_callback=true';
-        }
-
-        if ($this->checkPreOrders($order_id)) {
-            $actinia_args['preauth'] = 'Y';
-        }
-        if ($this->is_subscription($order_id)) {
-            $actinia_args['required_rectoken'] = 'Y';
-            if ((int) $amount === 0) {
-                $order->add_order_note( __('Payment free trial verification', 'actinia-woocommerce-payment-gateway') );
-                $actinia_args['verification'] = 'Y';
-                $actinia_args['amount'] = 1;
-            }
-        }
-        $actinia_args['signature'] = $this->getSignature($actinia_args, $this->salt);
-
-        $out = '';
-        $url = WC()->session->get('session_token_' . $this->merchant_id . '_' . $order_id);
-        if (empty($url)) {
-            $url = $this->get_checkout($actinia_args);
-            WC()->session->set('session_token_' . $this->merchant_id . '_' . $order_id, $url);
-        }
-        if ($this->page_mode == 'no') {
-            $out .= '<a class="button alt f-custom-button" href="' . $url . '" id="submit_actinia_payment_form">' . __('Pay via Actinia.eu', 'actinia-woocommerce-payment-gateway') . '</a>';
-            if ($this->page_mode_instant == 'yes')
-                $out .= "<script type='text/javascript'> document.getElementById('submit_actinia_payment_form').click(); </script>";
-        } else {
-            $out = '<div id="checkout"><div id="checkout_wrapper"></div></div>';
-            $out .= '
-			    <script>
-			    function checkoutInit(url) {
-			    	$ipsp("checkout").scope(function() {
-					this.setCheckoutWrapper("#checkout_wrapper");
-					this.addCallback(__DEFAULTCALLBACK__);
-					this.action("show", function(data) {
-						jQuery("#checkout_loader").remove();
-						jQuery("#checkout").show();
-					});
-					this.action("hide", function(data) {
-						jQuery("#checkout").hide();
-					});
-					this.action("resize", function(data) {
-						jQuery("#checkout_wrapper").height(data.height);
-						});
-					this.loadUrl(url);
-				});
-				}
-				checkoutInit("' . $url . '");
-				</script>';
-        }
-
-        return $out;
     }
 
     /**
@@ -494,102 +282,17 @@ class WC_actinia extends WC_Payment_Gateway
     }
 
     /**
-     * Request to api
-     * @param $args
-     * @return mixed
-     */
-    protected function get_checkout($args)
-    {
-        wp_die('get_checkout');
-        $conf = [
-            'redirection' => 2,
-            'user-agent' => 'CMS Woocommerce',
-            'headers' => ["Content-type" => "application/json;charset=UTF-8"],
-            'body' => json_encode(['request' => $args])
-        ];
-
-        try {
-            $response = wp_remote_post('https://api.actinia.eu/api/checkout/url/', $conf);
-
-            if (is_wp_error($response))
-                throw new Exception($response->get_error_message());
-
-            $response_code = wp_remote_retrieve_response_code($response);
-
-            if ($response_code != 200)
-                throw new Exception("Actinia API return code is $response_code");
-
-            $result = json_decode($response['body']);
-        } catch (Exception $e) {
-            $error = '<p>' . __("There has been a critical error on your website.") . '</p>';
-            $error .= '<p>' . $e->getMessage() . '</p>';
-
-            wp_die($error, __('Error'), ['response' => '500']);
-        }
-
-        if ($result->response->response_status == 'failure') {
-            if ($result->response->error_code == 1013 && !$this->checkPreOrders($args['order_id'], true)) {
-                $args['order_id'] = $args['order_id'] . self::ORDER_SEPARATOR . time();
-                unset($args['signature']);
-                $args['signature'] = $this->getSignature($args, $this->salt);
-                return $this->get_checkout($args);
-            } else {
-                wp_die($result->response->error_message);
-            }
-        }
-        $url = $result->response->checkout_url;
-        return $url;
-    }
-
-    /**
-     * Getting payment token for js ccrad
-     * @param $args
-     * @return array
-     */
-    protected function get_token($args)
-    {
-        wp_die('get_token');
-        $conf = [
-            'redirection' => 2,
-            'user-agent' => 'CMS Woocommerce',
-            'headers' => ["Content-type" => "application/json;charset=UTF-8"],
-            'body' => json_encode(['request' => $args])
-        ];
-
-        try {
-            $response = wp_remote_post('https://api.actinia.eu/api/checkout/token/', $conf);
-
-            if (is_wp_error($response))
-                throw new Exception($response->get_error_message());
-
-            $response_code = wp_remote_retrieve_response_code($response);
-            if ($response_code != 200)
-                throw new Exception("Actinia API return code is $response_code");
-
-            $result = json_decode($response['body']);
-        } catch (Exception $e) {
-            return ['result' => 'failture', 'messages' => $e->getMessage()];
-        }
-
-        if ($result->response->response_status == 'failure') {
-            return ['result' => 'failture', 'messages' => $result->response->error_message];
-        }
-        $token = $result->response->token;
-        return ['result' => 'success', 'token' => esc_attr($token)];
-    }
-
-    /**
      * @param int $order_id
-     * @param bool $must_be_logged_in
-     * @return array|string
+     * @param false $must_be_logged_in
+     * @return array
      */
     function process_payment($order_id, $must_be_logged_in = false)
     {
         global $woocommerce;
-        if ( $must_be_logged_in && get_current_user_id() === 0 ) {
-            wc_add_notice( __( 'You must be logged in.', 'actinia-woocommerce-payment-gateway' ), 'error' );
+        if ($must_be_logged_in && get_current_user_id() === 0) {
+            wc_add_notice(__('You must be logged in.', 'actinia-woocommerce-payment-gateway'), 'error');
             return [
-                'result'   => 'fail',
+                'result' => 'fail',
                 'redirect' => $woocommerce->cart->get_checkout_url()
             ];
         }
@@ -616,43 +319,49 @@ class WC_actinia extends WC_Payment_Gateway
 //        if ($this->on_checkout_page == 'yes') {
 
 
-
         // ------------------------------------------------------------
         $order_data = $order->get_data();
         $amount = round($order->get_total() * 100);
-        $actiniaApi = new WC_Actinia_Api();
+        $actiniaApi = new WC_Actinia_Api($this->is_test);
 
+        $externalID = $this->getUniqueId($order_id);
         $paymentData = [
-            'merchantId'        => esc_attr($this->merchant_id),
+            'merchantId' => esc_attr($this->merchant_id),
 
-            'clientName'        => esc_attr( ($order_data['billing']['first_name'] ?? '') . ' ' . ($order_data['billing']['last_name'] ?? '')),
-            'clientEmail'       => esc_attr($this->getEmail($order)),
-            'clientPhone'       => esc_attr($actiniaApi->preparePhone($order_data['billing']['phone'])),
-            'description'       => $this->getProductInfo($order_id),
-            'amount'            => str_replace(',','.',(string) round($order->get_total(), 2)),
-            'currency'          => esc_attr(get_woocommerce_currency()),
-            'clientAccountId'   => esc_attr($this->client_account_id),
-            'returnUrl'         => $this->getCallbackUrl(),
-            'externalID'        => $this->getUniqueId($order_id),
-            'locale'            => strtoupper(esc_attr($this->getLanguage())),
-            'expiresInMinutes'  => "45",
-            'expireType'        => "minutes",
+            'clientName' => esc_attr(($order_data['billing']['first_name'] ?? '') . ' ' . ($order_data['billing']['last_name'] ?? '')),
+            'clientEmail' => esc_attr($this->getEmail($order)),
+            'clientPhone' => esc_attr($actiniaApi->preparePhone($order_data['billing']['phone'])),
+            'description' => $this->getProductInfo($order_id),
+            'amount' => str_replace(',', '.', (string)round($order->get_total(), 2)),
+            'currency' => esc_attr(get_woocommerce_currency()),
+//            'clientAccountId'   => esc_attr($this->client_account_id),
+            'returnUrl' => $this->getCallbackUrl() . '&order_id=' . $externalID,
+            'externalId' => $externalID,
+            'locale' => strtoupper(esc_attr($this->getLanguage())),
+            'expiresInMinutes' => "45",
+//            'expireType'        => "minutes",
+//            'time'              => "45",
             'feeCalculationType' => "INNER",
-            'time'              => "45",
-            'withQR'            => "YES",
+            'withQR' => "YES",
+            'cb' => [
+                'serviceName' => 'InvoiceService',
+                'serviceAction' => 'invoiceGet',
+                'serviceParams' => [
+                    'callbackUrl' => $this->getCallbackUrl() . '&is_callback=true',
+                ]
+            ]
         ];
 
-        try{
+        try {
             $resData = $actiniaApi
                 ->setClientCodeName($this->client_code_name)
                 ->setPrivateKey($this->private_key)
                 ->chkPublicKey()
                 ->invoiceCreate($paymentData)
                 ->isSuccessException()
-                ->getData()
-                ;
+                ->getData();
 
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return array('result' => 'failure', 'messages' => $e->getMessage());
         }
 
@@ -662,105 +371,22 @@ class WC_actinia extends WC_Payment_Gateway
             $actinia_args['preauth'] = 'Y';
         }
 
-//        if ($this->is_subscription($order_id)) {
-//            $actinia_args['required_rectoken'] = 'Y';
-//            if ((int) $amount === 0) {
-//                $order->add_order_note( __('Payment free trial verification', 'actinia-woocommerce-payment-gateway') );
-//                $actinia_args['verification'] = 'Y';
-//                $actinia_args['amount'] = 1;
-//            }
-//        }
-
-//        $actinia_args['signature'] = $this->getSignature($actinia_args, $this->salt);
-
-//        $token = WC()->session
-//            ->get('session_token_' . md5($this->merchant_id . '_' . $order_id . '_' . $actinia_args['amount'] . '_' . $actinia_args['currency']));
-//
-//            if (empty($token)) {
-//                $token = $this->get_token($actinia_args);
-//                WC()->session->set('session_token_' . md5($this->merchant_id . '_' . $order_id . '_' . $actinia_args['amount'] . '_' . $actinia_args['currency']), $token);
-//            }
-
-            if ($resData) {
-                return [
-                    'result'   => 'success',
-                    'redirect' => $resData['link']
-                ];
-            } else {
-                wp_send_json([
-                    'result'   => 'fail',
-                    'redirect' => $woocommerce->cart->get_checkout_url()
-                ]);
-            }
-
-//        } else {
-//            return [
-//                'result' => 'success',
-//                'redirect' => $redirect
-//            ];
-//        }
-    }
-
-
-    /**
-     * @param int $order_id
-     * @param null $amount
-     * @param string $reason
-     * @return bool|WP_Error
-     */
-    public function process_refund($order_id, $amount = null, $reason = '')
-    {
-        wp_die('process_refund');
-        if (!$order = new WC_Order($order_id)) {
-            return new WP_Error('fallen', 'Order not found');
-        }
-
-        $data = [
-            'request' => [
-                'amount' => round($amount * 100),
-                'order_id' => $this->getUniqueId($order->get_id()),
-                'currency' => $order->get_currency(),
-                'merchant_id' => esc_sql($this->merchant_id),
-                'comment' => esc_attr($reason)
-            ]
-        ];
-        $data['request']['signature'] = $this->getSignature($data['request'], esc_sql($this->salt));
-        try {
-            $args = [
-                'redirection' => 2,
-                'user-agent' => 'CMS Woocommerce',
-                'headers' => ["Content-type" => "application/json;charset=UTF-8"],
-                'body' => json_encode($data)
+        if ($resData) {
+            return [
+                'result' => 'success',
+                'redirect' => $resData['link']
             ];
-            $response = wp_remote_post($this->refundurl, $args);
-            $actinia_response = json_decode($response['body'], TRUE);
-            $actinia_response = $actinia_response['response'];
-            if (isset($actinia_response['response_status']) and $actinia_response['response_status'] == 'success') {
-                switch ($actinia_response['reverse_status']) {
-                    case 'approved':
-                        return true;
-                    case 'processing':
-                        $order->add_order_note(__('Refund Actinia status: processing', 'actinia-woocommerce-payment-gateway'));
-                        return true;
-                    case 'declined':
-                        $order->add_order_note(__('Refund Actinia status: Declined', 'actinia-woocommerce-payment-gateway'));
-                        return new WP_Error('error', __('Refund Actinia status: Declined', 'actinia-woocommerce-payment-gateway'), 'actinia-woocommerce-payment-gateway');
-                    default:
-                        $order->add_order_note(__('Refund Actinia status: Unknown', 'actinia-woocommerce-payment-gateway'));
-                        return new WP_Error('error', __('Refund Actinia status: Unknown. Try to contact support', 'actinia-woocommerce-payment-gateway'), 'actinia-woocommerce-payment-gateway');
-                }
-            } else {
-                return new WP_Error('error', __($actinia_response['error_code'] . '. ' . $actinia_response['error_message'], 'actinia-woocommerce-payment-gateway'));
-            }
-        } catch (Exception $e) {
-            return new WP_Error('error', __($e->getMessage(), 'actinia-woocommerce-payment-gateway'));
+        } else {
+            wp_send_json([
+                'result' => 'fail',
+                'redirect' => $woocommerce->cart->get_checkout_url()
+            ]);
         }
+
     }
 
     /**
-     * Answer Url
      * @return string
-     * +++
      */
     private function getCallbackUrl()
     {
@@ -803,123 +429,6 @@ class WC_actinia extends WC_Payment_Gateway
         return $email;
     }
 
-    private function getPhone($order)
-    {
-//        $current_user = wp_get_current_user();
-//        $email = $current_user->user_phone;
-//
-//        if (empty($email)) {
-//            $order_data = $order->get_data();
-//            $email = $order_data['billing']['email'];
-//        }
-
-        return '';
-    }
-
-    /**
-     * Validation responce
-     * @param $response
-     * @return bool
-     *
-     */
-    protected function isPaymentValid($response)
-    {
-        wp_die('isPaymentValid');
-        global $woocommerce;
-        list($orderId,) = explode(self::ORDER_SEPARATOR, $response['order_id']);
-        $order = new WC_Order($orderId);
-        $total = round($order->get_total() * 100);
-        if ($order === false) {
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return __('An error has occurred during payment. Please contact us to ensure your order has submitted.', 'actinia-woocommerce-payment-gateway');
-        }
-        if ($response['amount'] != $total and $total != 0) {
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return __('Amount incorrect.', 'actinia-woocommerce-payment-gateway');
-        }
-        if ($this->merchant_id != $response['merchant_id']) {
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return __('An error has occurred during payment. Merchant data is incorrect.', 'actinia-woocommerce-payment-gateway');
-        }
-        if (version_compare(WOOCOMMERCE_VERSION, '2.7.0', '>=')) {
-            if ($order->get_payment_method() != $this->id) {
-                $this->clear_actinia_cache($orderId, $total, $response['currency']);
-                return __('Payment method incorrect.', 'actinia-woocommerce-payment-gateway');
-            }
-        }
-        $responseSignature = $response['signature'];
-        if (isset($response['response_signature_string'])) {
-            unset($response['response_signature_string']);
-        }
-        if (isset($response['signature'])) {
-            unset($response['signature']);
-        }
-
-        if ($this->getSignature($response, $this->salt) != $responseSignature) {
-            $order->update_status('failed');
-            $order->add_order_note(__('Transaction ERROR: signature is not valid', 'actinia-woocommerce-payment-gateway'));
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return __('An error has occurred during payment. Signature is not valid.', 'actinia-woocommerce-payment-gateway');
-        }
-
-        if ($response['order_status'] == self::ORDER_DECLINED) {
-            $errorMessage = __("Thank you for shopping with us. However, the transaction has been declined.", 'actinia-woocommerce-payment-gateway');
-            $order->add_order_note('Transaction ERROR: order declined<br/>Actinia ID: ' . $response['payment_id']);
-            if ($this->declined_order_status and $this->declined_order_status != 'default') {
-                $order->update_status($this->declined_order_status);
-            } else {
-                $order->update_status('failed');
-            }
-
-            wp_mail($response['sender_email'], 'Order declined', $errorMessage);
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return $errorMessage;
-        }
-
-        if ($response['order_status'] == self::ORDER_EXPIRED) {
-            $errorMessage = __("Thank you for shopping with us. However, the transaction has been expired.", 'actinia-woocommerce-payment-gateway');
-            $order->add_order_note(__('Transaction ERROR: order expired<br/>ACTINIA ID: ', 'actinia-woocommerce-payment-gateway') . $response['payment_id']);
-            if ($this->expired_order_status and $this->expired_order_status != 'default') {
-                $order->update_status($this->expired_order_status);
-            } else {
-                $order->update_status('cancelled');
-            }
-            $this->clear_actinia_cache($orderId, $total, $response['currency']);
-            return $errorMessage;
-        }
-
-        if ($response['tran_type'] == 'purchase' and $response['order_status'] != self::ORDER_APPROVED) {
-            $this->msg['class'] = 'woocommerce-error';
-            $this->msg['message'] = __("Thank you for shopping with us. But your payment declined.", 'actinia-woocommerce-payment-gateway');
-            $order->add_order_note("Actinia order status: " . $response['order_status']);
-        }
-        if (($response['tran_type'] == 'purchase' or $response['tran_type'] == 'verification')
-            and !$order->is_paid()
-            and $response['order_status'] == self::ORDER_APPROVED
-            and ($total == $response['amount'] or $total == 0)) {
-            if ($this->checkPreOrders($orderId, true)) {
-                WC_Pre_Orders_Order::mark_order_as_pre_ordered($order);
-            } else {
-                $order->payment_complete();
-                $order->add_order_note(__('Actinia payment successful.<br/>ACTINIA ID: ', 'actinia-woocommerce-payment-gateway') . ' (' . $response['payment_id'] . ')');
-                if ($this->default_order_status and $this->default_order_status != 'default') {
-                    $order->update_status($this->default_order_status);
-                }
-            }
-        } elseif ($total != $response['amount'] and $response['tran_type'] != 'verification') {
-            $order->add_order_note(__('Transaction ERROR: amount incorrect<br/>ACTINIA ID: ', 'actinia-woocommerce-payment-gateway') . $response['payment_id']);
-            if ($this->declined_order_status and $this->declined_order_status != 'default') {
-                $order->update_status($this->declined_order_status);
-            } else {
-                $order->update_status('failed');
-            }
-        }
-        $this->clear_actinia_cache($orderId, $total, $response['currency']);
-        $woocommerce->cart->empty_cart();
-
-        return true;
-    }
-
     /**
      * @param $orderId
      * @param $total
@@ -936,45 +445,30 @@ class WC_actinia extends WC_Payment_Gateway
      */
     function check_actinia_response()
     {
-        wp_die('check_actinia_response');
-        if (empty($_POST)) {
-            $callback = json_decode(file_get_contents("php://input"));
-            if (empty($callback)) {
-                wp_die('go away!');
-            }
-            $_POST = [];
-            foreach ($callback as $key => $val) {
-                $_POST[esc_sql($key)] = esc_sql($val);
-            }
-        }
-        list($orderId,) = explode(self::ORDER_SEPARATOR, $_POST['order_id']);
-        $order = new WC_Order($orderId);
-        $paymentInfo = $this->isPaymentValid($_POST);
-        if ($paymentInfo === true and $_POST['order_status'] == 'reversed') {
-            $order->add_order_note(__('Refund Actinia status: ' . esc_sql($_POST['order_status']) . ', Refund payment id: ' . esc_sql($_POST['payment_id']), 'actinia-woocommerce-payment-gateway'));
-            die('Order Reversed');
-        }
-        if ($paymentInfo === true and !$order->is_paid()) {
-            if ($_POST['order_status'] == self::ORDER_APPROVED) {
-                $this->msg['message'] = __("Thank you for shopping with us. Your account has been charged and your transaction is successful.", 'actinia-woocommerce-payment-gateway');
-            }
-            $this->msg['class'] = 'woocommerce-message';
-        } elseif (!$order->is_paid()) {
-            $this->msg['class'] = 'error';
-            $this->msg['message'] = $paymentInfo;
-            $order->add_order_note("ERROR: " . $paymentInfo);
-        }
-        if ($this->is_subscription($orderId)) {
-            if (!empty($_POST['rectoken'])) {
-                $this->save_card($_POST, $order);
-            } else {
-                $order->add_order_note('Transaction Subscription ERROR: no card token');
-            }
-        }
+        try {
+            if (isset($_REQUEST['is_callback'])) {
+                $callback = json_decode(file_get_contents("php://input"), true);
+                file_put_contents(__DIR__ . '/2_isset_is_callback.log', print_r([
+                    '$_REQUEST' => $_REQUEST,
+                    '$callback' => $callback,
+                ], true), FILE_APPEND);
+                $this->callback_process($callback);
 
-        if (isset($callback) && isset($_REQUEST['is_callback'])) { // return 200 to callback
-            die();
-        } else { // redirect
+            } else {
+                file_put_contents(__DIR__ . '/actiniaCallback22.log', print_r($_POST, true), FILE_APPEND);
+                list($orderId,) = explode(self::ORDER_SEPARATOR, $_GET['order_id']);
+                $order = new WC_Order($orderId);
+                if ($order && !$order->is_paid()) {
+                    $this->msg['message'] = __("Thank you for shopping with us. Your account has been charged and your transaction is successful.", 'actinia-woocommerce-payment-gateway');
+                    $this->msg['class'] = 'woocommerce-message';
+
+                } elseif (!$order->is_paid()) {
+                    $this->msg['class'] = 'error';
+                    $this->msg['message'] = 'error';
+                    $order->add_order_note("ERROR: " . 'error');
+                }
+            }
+
             if ($this->redirect_page_id == "" || $this->redirect_page_id == 0) {
                 $redirect_url = $order->get_checkout_order_received_url();
             } else {
@@ -987,52 +481,55 @@ class WC_actinia extends WC_Payment_Gateway
             }
             wp_redirect($redirect_url);
             exit;
+
+        } catch (Exception $e){
+            file_put_contents(__DIR__ . '/000_Exception.log', print_r([$_POST, $e->getMessage()], true), FILE_APPEND);
         }
     }
 
     /**
      * @param $data
-     * @param $order
-     * @return bool|false|int
      */
-    private function save_card($data, $order)
-    {
-        wp_die('save_card');
-        $userid = $order->get_user_id();
-        $token = false;
-        if ($this->isTokenAlreadySaved($data['rectoken'], $userid)) {
-            update_user_meta($userid, 'actinia_token', [
-                'token' => $data['rectoken'],
-                'payment_id' => $this->id
-            ]);
+    protected function callback_process($data){
+        try{
+            $actiniaApi = new WC_Actinia_Api($this->is_test);
 
-            return true;
-        }
-        $token = add_user_meta($userid, 'actinia_token', [
-            'token' => $data['rectoken'],
-            'payment_id' => $this->id
-        ]);
-        if ($token) {
-            wc_add_notice(__('Card saved.', 'woocommerce-actinia'));
-        }
+            $payment = $actiniaApi
+                ->setClientCodeName($this->client_code_name)
+                ->setPrivateKey($this->private_key)
+                ->chkPublicKey()
+                ->isPaymentValid($data);
 
-        return $token;
-    }
-
-    /**
-     * @param $token
-     * @param $userid
-     * @return bool
-     */
-    private function isTokenAlreadySaved( $token, $userid ) {
-        $tokens = get_user_meta( $userid, 'actinia_token' );
-        foreach ( $tokens as $t ) {
-            if ( $t['token'] === $token ) {
-                return true;
+            if($payment['merchantId'] !== $this->merchant_id){
+                throw new Exception('not valid merchantId (|' .$payment['merchantId']. ' | '. $this->merchant_id .' |)');
             }
-        }
 
-        return false;
+            list($orderId,) = explode(self::ORDER_SEPARATOR, $payment['externalId']);
+            $order = new WC_Order($orderId);
+
+            if(!$order)
+                throw new Exception('Order not found: ' . $orderId);
+
+            $order->add_order_note(__('Actinia status: ' . esc_sql($payment['status']) . ', Payment id: ' . esc_sql($payment['invoiceNumber']), 'actinia-woocommerce-payment-gateway'));
+
+            switch($payment['status']){
+                case self::ORDER_APPROVED:
+                    $order->update_status($this->default_order_status);
+                    break;
+                case self::ORDER_EXPIRED:
+                    $order->update_status($this->expired_order_status);
+                    break;
+                case self::ORDER_CANCELED:
+                    $order->update_status($this->declined_order_status);
+                    break;
+            }
+
+            die('Order Reversed');
+
+
+        } catch (Exception $e){
+            wp_die($e->getMessage());
+        }
     }
 
     /**
@@ -1074,26 +571,12 @@ class WC_actinia extends WC_Payment_Gateway
     }
 
     /**
-     * @return array
-     */
-    function actinia_get_payment_type()
-    {
-        wp_die('actinia_get_payment_type');
-        return [
-            'on_checkout_page' => __('Built-in form', 'actinia-woocommerce-payment-gateway'),
-            'page_mode' => __('In-store payment page', 'actinia-woocommerce-payment-gateway'),
-            'page_mode_instant' => __('Redirection', 'actinia-woocommerce-payment-gateway'),
-        ];
-    }
-
-    /**
      * Send capture request
      * @param $args
      * @return array
      * */
     protected function get_capture($args)
     {
-        wp_die('get_capture');
         $conf = [
             'redirection' => 2,
             'user-agent' => 'CMS Woocommerce',
@@ -1111,40 +594,6 @@ class WC_actinia extends WC_Payment_Gateway
     }
 
     /**
-     * Process capture
-     * @param $order
-     * @return WP_Error
-     */
-    public function process_pre_order_payments($order)
-    {
-        wp_die('process_pre_order_payments');
-        if (!$order) {
-            return new WP_Error('fallen', 'Order not found');
-        }
-        $actinia_args = [
-            'order_id' => $this->getUniqueId($order->get_id()),
-            'currency' => esc_attr(get_woocommerce_currency()),
-            'amount' => round($order->get_total() * 100),
-            'merchant_id' => esc_attr($this->merchant_id),
-        ];
-        $actinia_args['signature'] = $this->getSignature($actinia_args, $this->salt);
-        $result = $this->get_capture($actinia_args);
-        if (isset($result) && $result) {
-            if (isset($result['result']) && $result['result'] == 'failture') {
-                $order->add_order_note('Transaction ERROR:<br/> ' . $result['messages']);
-            } else {
-                if ($result['data']['response_status'] == 'success' && $result['data']['capture_status'] == 'captured') {
-                    $order->add_order_note(__('Actinia payment successful.<br/>ACTINIA ID: ', 'actinia-woocommerce-payment-gateway') . ' (' . $result['data']['order_id'] . ')');
-                    $order->payment_complete();
-                } else {
-                    $request_id = '<br>Request_id: ' . $result['data']['request_id'];
-                    $order->add_order_note('Transaction: ' . $result['data']['response_status'] . '  <br/> ' . $result['data']['error_message'] . $request_id);
-                }
-            }
-        }
-    }
-
-    /**
      * Check pre order class and order status
      * @param $order_id
      * @param bool $withoutToken
@@ -1152,6 +601,9 @@ class WC_actinia extends WC_Payment_Gateway
      */
     public function checkPreOrders($order_id, $withoutToken = false)
     {
+
+        file_put_contents(__DIR__ . '/_checkPreOrders.log', print_r([$order_id, $withoutToken], true));
+
         if (class_exists('WC_Pre_Orders_Order')
             && WC_Pre_Orders_Order::order_contains_pre_order($order_id)) {
             if ($withoutToken) {
@@ -1173,6 +625,7 @@ class WC_actinia extends WC_Payment_Gateway
         $this->refundurl = 'https://api.actinia.eu/api/reverse/order_id';
 
         $this->title = $this->get_option('title');
+        $this->is_test = $this->get_option('is_test');
         $this->merchant_id = $this->get_option('merchant_id');
         $this->client_code_name = $this->get_option('client_code_name');
         $this->client_account_id = $this->get_option('client_account_id');
@@ -1247,17 +700,12 @@ class WC_actinia extends WC_Payment_Gateway
         if (isset($this->on_checkout_page) and $this->on_checkout_page == 'yes') {
             add_filter('woocommerce_order_button_html', [&$this, 'custom_order_button_html']);
         }
-//        if ($this->test_mode == 'yes') {
-//            $this->merchant_id = '1396424';
-//            $this->salt = 'test';
-//        }
+
         if ($this->actinia_unique = get_option('actinia_unique', true)) {
             add_option('actinia_unique', time());
         }
-        add_action('woocommerce_receipt_actinia', [&$this, 'receipt_page']);
+
         add_action('wp_enqueue_scripts', [$this, 'checkoutScriptsActinia']);
-        if (class_exists('WC_Pre_Orders_Order')) {
-            add_action('wc_pre_orders_process_pre_order_completion_payment_' . $this->id, [$this, 'process_pre_order_payments']);
-        }
+
     }
 }
