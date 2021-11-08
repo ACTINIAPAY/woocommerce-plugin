@@ -1,17 +1,11 @@
 <?php
 /*
 Plugin Name: WooCommerce - Actinia payment gateway
-Plugin URI: https://actinia.eu
 Description: Actinia Payment Gateway for WooCommerce.
 Version: 1.0.0
-Author: ACTINIA - Unified Payment Platform
-Author URI: https://actinia.eu/
-Domain Path: /languages
 Text Domain: actinia-woocommerce-payment-gateway
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-WC requires at least: 2.5.0
-WC tested up to: 4.7.1
 */
 
 defined( 'ABSPATH' ) or exit;
@@ -60,7 +54,6 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
             add_filter( 'woocommerce_payment_gateways', [$this, 'woocommerce_add_actinia_gateway']);
             add_action('wp_ajax_nopriv_generate_ajax_order_actinia_info', ['WC_actinia', 'generate_ajax_order_actinia_info'], 99);
             add_action('wp_ajax_generate_ajax_order_actinia_info', ['WC_actinia', 'generate_ajax_order_actinia_info'], 99);
-
         }
 
         /**
@@ -100,11 +93,7 @@ if ( ! class_exists( 'WC_PaymentActinia' ) ) :
          * @return array
          */
         public function woocommerce_add_actinia_gateway( $methods ) {
-            if ( $this->subscription_support_enabled ) {
-                $methods[] = 'WC_Actinia_Subscriptions';
-            } else {
-                $methods[] = 'WC_actinia';
-            }
+            $methods[] = 'WC_actinia';
             return $methods;
         }
     }

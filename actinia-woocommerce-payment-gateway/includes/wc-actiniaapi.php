@@ -9,12 +9,6 @@ class WC_Actinia_Api
 //    const URL_TEST = 'https://api.clients.sandbox.actinia.tech/';
     const URL_PROD = 'https://api.clients.actinia.tech/';
 
-    const ORDER_APPROVED = 'approved';
-    const ORDER_DECLINED = 'declined';
-
-    const ORDER_SEPARATOR = '#';
-
-    const SIGNATURE_SEPARATOR = '|';
     const SESSION_PUBLICKEY_NAME = "actinia_publicKey";
 
 
@@ -38,16 +32,22 @@ class WC_Actinia_Api
     protected $isHostPublicKey = true;
     protected $privateKey = null;
 
-
+    /**
+     * WC_Actinia_Api constructor.
+     * @param false $is_test
+     */
     public function __construct($is_test = false)
     {
         if($is_test === 'yes')
             $this->url = self::URL_TEST;
         else
             $this->url = self::URL_PROD;
-
     }
 
+    /**
+     * @param $val
+     * @return $this
+     */
     public function setPrivateKey($val){
         $this->privateKey = $val;
         return $this;
@@ -182,7 +182,7 @@ class WC_Actinia_Api
      * @return array
      */
     public function getData():array{
-        return $this->resultData;// ?? [];
+        return $this->resultData;
     }
 
     /**
@@ -295,7 +295,6 @@ class WC_Actinia_Api
 
         } catch (Exception $e){
             $this->resultData = json_decode($response, true);
-            die ('<pre> sendToApi ' . print_r($this->resultData, true) . '<pre>');
             throw new Exception($this->getErrorMsg());
         }
     }

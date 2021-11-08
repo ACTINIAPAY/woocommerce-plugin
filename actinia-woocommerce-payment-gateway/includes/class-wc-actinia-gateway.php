@@ -30,8 +30,6 @@ class WC_actinia extends WC_Payment_Gateway
     public $language;
     public $is_test;
 
-    public $liveurl;
-    public $refundurl;
     public $redirect_page_id;
     public $page_mode;
     public $page_mode_instant;
@@ -362,7 +360,7 @@ class WC_actinia extends WC_Payment_Gateway
                 ->getData();
 
         } catch (Exception $e) {
-            return array('result' => 'failure', 'messages' => $e->getMessage());
+            return ['result' => 'failure', 'messages' => $e->getMessage()];
         }
 
         // ------------------------------------------------------------
@@ -448,14 +446,9 @@ class WC_actinia extends WC_Payment_Gateway
         try {
             if (isset($_REQUEST['is_callback'])) {
                 $callback = json_decode(file_get_contents("php://input"), true);
-                file_put_contents(__DIR__ . '/2_isset_is_callback.log', print_r([
-                    '$_REQUEST' => $_REQUEST,
-                    '$callback' => $callback,
-                ], true), FILE_APPEND);
                 $this->callback_process($callback);
 
             } else {
-                file_put_contents(__DIR__ . '/actiniaCallback22.log', print_r($_POST, true), FILE_APPEND);
                 list($orderId,) = explode(self::ORDER_SEPARATOR, $_GET['order_id']);
                 $order = new WC_Order($orderId);
                 if ($order && !$order->is_paid()) {
@@ -483,7 +476,7 @@ class WC_actinia extends WC_Payment_Gateway
             exit;
 
         } catch (Exception $e){
-            file_put_contents(__DIR__ . '/000_Exception.log', print_r([$_POST, $e->getMessage()], true), FILE_APPEND);
+            wp_die($e->getMessage());
         }
     }
 
@@ -601,9 +594,6 @@ class WC_actinia extends WC_Payment_Gateway
      */
     public function checkPreOrders($order_id, $withoutToken = false)
     {
-
-        file_put_contents(__DIR__ . '/_checkPreOrders.log', print_r([$order_id, $withoutToken], true));
-
         if (class_exists('WC_Pre_Orders_Order')
             && WC_Pre_Orders_Order::order_contains_pre_order($order_id)) {
             if ($withoutToken) {
@@ -621,8 +611,6 @@ class WC_actinia extends WC_Payment_Gateway
      *
      */
     protected function getOptions(){
-        $this->liveurl = 'https://api.actinia.eu/api/checkout/redirect/';
-        $this->refundurl = 'https://api.actinia.eu/api/reverse/order_id';
 
         $this->title = $this->get_option('title');
         $this->is_test = $this->get_option('is_test');
@@ -632,12 +620,6 @@ class WC_actinia extends WC_Payment_Gateway
         $this->private_key = $this->get_option('private_key');
         $this->currency = $this->get_option('currency');
         $this->language = $this->get_option('language');
-
-//        $this->calendar = $this->get_option('calendar');
-//        $this->salt = $this->get_option('salt');
-//        $this->test_mode = $this->get_option('test_mode');
-//        $this->payment_type = $this->get_option('payment_type') ? $this->get_option('payment_type') : false;
-//        $this->force_lang = $this->get_option('force_lang') ? $this->get_option('force_lang') : false;
 
         $this->redirect_page_id = $this->get_option('redirect_page_id');
         $this->description = $this->get_option('description');
