@@ -129,7 +129,7 @@ class WC_Actinia_Api
      */
     public function send(){
         try{
-            $_data = (array) json_decode($this->sendToApi(), true);
+            $_data = $this->decodeJsonObjToArr($this->sendToApi());
 
             if(!empty($_data['data']) && !empty($_data['token'])) {
                 if($this->isHostPublicKey)
@@ -383,5 +383,31 @@ class WC_Actinia_Api
     public function getAmount($order)
     {
         return str_replace(',','.',(string) round($order['details']['BT']->order_total, 2));
+    }
+
+
+    /**
+     * @param $data
+     * @param false $isData
+     * @return array
+     */
+    public function decodeJsonObjToArr($data, $isData = false):array{
+        if($isData)
+            $_d = $data;
+        else
+            $_d = (array)json_decode(html_entity_decode($data), true);
+
+        $_d = (array)json_decode(json_encode($_d), true);
+
+        $res = [];
+        foreach ($_d as $key => $item) {
+            if(gettype($item) === 'object') {
+                $res[$key] = (array)$item;
+            }
+            else {
+                $res[$key] = $item;
+            }
+        }
+        return $res;
     }
 }

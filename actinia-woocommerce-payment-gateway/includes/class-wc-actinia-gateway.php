@@ -486,6 +486,7 @@ class WC_actinia extends WC_Payment_Gateway
     protected function callback_process($data){
         try{
             $actiniaApi = new WC_Actinia_Api($this->is_test);
+            $data = $actiniaApi->decodeJsonObjToArr($data, true);
 
             $payment = $actiniaApi
                 ->setClientCodeName($this->client_code_name)
