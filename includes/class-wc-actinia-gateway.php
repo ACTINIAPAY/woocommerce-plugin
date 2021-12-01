@@ -328,7 +328,6 @@ class WC_actinia extends WC_Payment_Gateway
 
             'clientName' => esc_attr(($order_data['billing']['first_name'] ?? '') . ' ' . ($order_data['billing']['last_name'] ?? '')),
             'clientEmail' => esc_attr($this->getEmail($order)),
-            'clientPhone' => esc_attr($actiniaApi->preparePhone($order_data['billing']['phone'])),
             'description' => $this->getProductInfo($order_id),
             'amount' => str_replace(',', '.', (string)round($order->get_total(), 2)),
             'currency' => esc_attr(get_woocommerce_currency()),
@@ -349,6 +348,9 @@ class WC_actinia extends WC_Payment_Gateway
                 ]
             ]
         ];
+
+        if(!empty($order_data['billing']['phone']))
+            $paymentData['clientPhone'] = esc_attr($actiniaApi->preparePhone($order_data['billing']['phone']));
 
         try {
             $resData = $actiniaApi
