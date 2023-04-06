@@ -496,9 +496,9 @@ class WC_actinia extends WC_Payment_Gateway
                 ->chkPublicKey()
                 ->isPaymentValid($data);
 
-            if($payment['merchantId'] !== $this->merchant_id){
-                throw new Exception('not valid merchantId (|' .$payment['merchantId']. ' | '. $this->merchant_id .' |)');
-            }
+//             if($payment['merchantId'] !== $this->merchant_id){
+//                 throw new Exception('not valid merchantId (|' .$payment['merchantId']. ' | '. $this->merchant_id .' |)');
+//             }
 
             list($orderId,) = explode(self::ORDER_SEPARATOR, $payment['externalId']);
             $order = new WC_Order($orderId);
